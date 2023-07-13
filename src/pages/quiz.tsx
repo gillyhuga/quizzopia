@@ -108,17 +108,19 @@ const QuizPage: React.FC = () => {
     const currentQuestionObj = questions[currentQuestion];
     const isCorrect = currentQuestionObj.correct_answer === answer;
     setSelectedAnswers([...selectedAnswers, answer]);
+    
     if (isCorrect) {
       setTotalCorrect(totalCorrect + 1);
     } else {
       setTotalWrong(totalWrong + 1);
     }
+    
     setTotalAnswered(totalAnswered + 1);
-
-    if (totalAnswered === 9) {
+    
+    if (totalAnswered + 1 === 10) {
       const result = {
-        totalCorrect,
-        totalWrong,
+        totalCorrect: totalCorrect + (isCorrect ? 1 : 0),
+        totalWrong: totalWrong + (isCorrect ? 0 : 1),
         totalAnswered: totalAnswered + 1,
       };
       Cookies.set('quizResult', JSON.stringify(result));
