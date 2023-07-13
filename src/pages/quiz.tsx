@@ -164,9 +164,9 @@ const QuizPage: React.FC = () => {
             <span className="font-bold">Time Remaining:</span> {timeRemaining} seconds
           </h2>
         </div>
-        {questions.length > 0 ? (
+        {questions.length > 0 && currentQuestion < questions.length ? (
           <QuestionCard
-            categroy={questions[currentQuestion].category}
+            category={questions[currentQuestion].category}
             question={he.decode(questions[currentQuestion].question)}
             answers={shuffledAnswers}
             onSelectAnswer={handleSelectAnswer}
