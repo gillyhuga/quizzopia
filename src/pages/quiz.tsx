@@ -5,6 +5,9 @@ import Cookies from 'js-cookie';
 import Layout from '../components/Layout';
 import QuestionCard from '../components/QuestionCard';
 import he from 'he';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store';
+import { setQuestions } from '../store/question';
 
 interface Question {
   category: string;
@@ -39,7 +42,9 @@ const getShuffledAnswers = (questions: Question[], currentQuestion: number) => {
 
 const QuizPage: React.FC = () => {
   const router = useRouter();
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const dispatch = useDispatch();
+  const { questions } = useSelector((state: RootState) => state.questions);
+  // const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
   const [totalCorrect, setTotalCorrect] = useState<number>(0);
@@ -47,13 +52,15 @@ const QuizPage: React.FC = () => {
   const [totalAnswered, setTotalAnswered] = useState<number>(0);
   const [timeRemaining, setTimeRemaining] = useState<number>(60);
 
+  console.log(questions)
+
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
         const response = await axios.get(
           'https://opentdb.com/api.php?amount=10&difficulty=easy&type=multiple'
         );
-        setQuestions(response.data.results);
+        dispatch(setQuestions(response.data.results));
       } catch (error) {
         console.error(error);
       }
