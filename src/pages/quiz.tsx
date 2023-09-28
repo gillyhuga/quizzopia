@@ -17,6 +17,7 @@ import {
   setQuestions,
   setCurrentQuestion,
 } from '../store/question';
+import HeadMeta from '../components/HeadMeta';
 
 interface Question {
   category: string;
@@ -138,6 +139,7 @@ const QuizPage: React.FC = () => {
 
   return (
     <Layout>
+      <HeadMeta title='Quiz'/>
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="flex justify-between w-full md:w-3/5">
           <h2 className="text-lg mb-4">

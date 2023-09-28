@@ -1,13 +1,11 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
-import Image from 'next/image';
-import heroIllustration from '../../public/assets/Hero.png';
-import startedIllustration from '../../public/assets/Started.png';
 import { ChatBubbleLeftIcon, StarIcon, CheckBadgeIcon, ChartBarIcon } from '@heroicons/react/24/solid'
 import Header from '../components/Header';
 import Features from '../components/Features';
 import GetStarted from '../components/GetStarted';
 import Footer from '../components/Footer';
+import HeadMeta from '../components/HeadMeta';
 
 const featureData = [
   {
@@ -39,6 +37,7 @@ const featureData = [
 function App() {
   return (
     <div >
+      <HeadMeta/>
       <div className='container max-w-screen-xl mx-auto'>
         <Navbar />
         <Header />

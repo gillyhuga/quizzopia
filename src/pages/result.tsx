@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/router';
 import { useDispatch, useSelector } from 'react-redux';
 import Cookies from 'js-cookie';
@@ -10,6 +10,7 @@ import {
 } from '../store/answer';
 import {resetQuestion} from '../store/question';
 import { RootState } from '../store';
+import HeadMeta from '../components/HeadMeta';
 
 const ResultPage: React.FC = () => {
   const router = useRouter();
@@ -27,6 +28,7 @@ const ResultPage: React.FC = () => {
 
   return (
     <Layout>
+      <HeadMeta title='Result'/>
       <div className="flex flex-col items-center justify-center h-screen">
         <h1 className="text-5xl font-bold mb-4">Quiz Results</h1>
         <Image src={resultIllustration} alt="Quiz Results Illustration" width={300} height={300} />
