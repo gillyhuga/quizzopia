@@ -1,30 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { useDispatch, useSelector } from 'react-redux';
 import Cookies from 'js-cookie';
 import Layout from '../components/Layout';
 import Image from 'next/image';
 import resultIllustration from '../../public/assets/Illustration.png';
+import {
+  resetState,
+} from '../store/answer';
+import {resetQuestion} from '../store/question';
+import { RootState } from '../store';
 
 const ResultPage: React.FC = () => {
   const router = useRouter();
-  const [totalCorrect, setTotalCorrect] = useState<number>(0);
-  const [totalWrong, setTotalWrong] = useState<number>(0);
-  const [totalAnswered, setTotalAnswered] = useState<number>(0);
-
-  useEffect(() => {
-    const resultString = Cookies.get('quizResult');
-    if (resultString) {
-      const result = JSON.parse(resultString);
-      setTotalCorrect(result.totalCorrect);
-      setTotalWrong(result.totalWrong);
-      setTotalAnswered(result.totalAnswered);
-    } else {
-      router.push('/quiz');
-    }
-  }, [router]);
+  const dispatch = useDispatch();
+  const { totalCorrect, totalWrong, answeredQuestions } = useSelector((state: RootState) => state.answers);
 
   const handleLogout = () => {
-    Cookies.remove('quizResult');
+    dispatch(resetState());
+    dispatch(resetQuestion());
     Cookies.remove('timeRemaining');
     router.push('/quiz');
   };
@@ -48,7 +42,7 @@ const ResultPage: React.FC = () => {
           </div>
           <div className="flex justify-between mb-4">
             <p>Total Answered:</p>
-            <p>{totalAnswered}</p>
+            <p>{answeredQuestions.length}</p>
           </div>
           <div className="flex justify-between mb-4">
             <p>Score:</p>

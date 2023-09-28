@@ -7,7 +7,16 @@ import QuestionCard from '../components/QuestionCard';
 import he from 'he';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
-import { setQuestions } from '../store/question';
+import {
+  AnsweredQuestion,
+  setAnsweredQuestions,
+  setTotalCorrect,
+  setTotalWrong,
+} from '../store/answer';
+import {
+  setQuestions,
+  setCurrentQuestion,
+} from '../store/question';
 
 interface Question {
   category: string;
@@ -16,21 +25,19 @@ interface Question {
   incorrect_answers: string[];
 }
 
-const getShuffledAnswers = (questions: Question[], currentQuestion: number) => {
-  const shuffleAnswers = (answers: string[]) => {
+const getShuffledAnswers = (questions: Question[], currentQuestion: number): string[] => {
+  const shuffleAnswers = (answers: string[]): string[] => {
     const shuffledAnswers = [...answers];
     for (let i = shuffledAnswers.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [shuffledAnswers[i], shuffledAnswers[j]] = [
-        shuffledAnswers[j],
-        shuffledAnswers[i],
-      ];
+      [shuffledAnswers[i], shuffledAnswers[j]] = [shuffledAnswers[j], shuffledAnswers[i]];
     }
     return shuffledAnswers;
   };
 
-  if (questions.length > 0) {
-    const currentQuestionObj = questions[currentQuestion];
+  const currentQuestionObj = questions[currentQuestion];
+
+  if (currentQuestionObj && currentQuestionObj.incorrect_answers) {
     const answers = [
       ...currentQuestionObj.incorrect_answers.map((answer) => he.decode(answer)),
       he.decode(currentQuestionObj.correct_answer),
@@ -43,48 +50,31 @@ const getShuffledAnswers = (questions: Question[], currentQuestion: number) => {
 const QuizPage: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const { questions } = useSelector((state: RootState) => state.questions);
-  // const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState<number>(0);
-  const [selectedAnswers, setSelectedAnswers] = useState<string[]>([]);
-  const [totalCorrect, setTotalCorrect] = useState<number>(0);
-  const [totalWrong, setTotalWrong] = useState<number>(0);
-  const [totalAnswered, setTotalAnswered] = useState<number>(0);
+  const { questions, currentQuestion } = useSelector((state: RootState) => state.questions);
+  const { totalCorrect, totalWrong, answeredQuestions } = useSelector((state: RootState) => state.answers);
   const [timeRemaining, setTimeRemaining] = useState<number>(60);
 
-  console.log(questions)
-
   useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const response = await axios.get(
-          'https://opentdb.com/api.php?amount=10&difficulty=easy&type=multiple'
-        );
-        dispatch(setQuestions(response.data.results));
-      } catch (error) {
-        console.error(error);
+    const fetchData = async () => {
+      if (currentQuestion === 0 && questions.length === 0) {
+        try {
+          const response = await axios.get(
+            'https://opentdb.com/api.php?amount=10&difficulty=easy&type=multiple'
+          );
+          dispatch(setQuestions(response.data.results));
+        } catch (error) {
+          console.error(error);
+        }
       }
     };
 
-    fetchQuestions();
-  }, []);
-
-  useEffect(() => {
-    const savedResult = Cookies.get('quizResult');
-    if (savedResult) {
-      const { totalCorrect, totalWrong, totalAnswered } = JSON.parse(savedResult);
-      setTotalCorrect(totalCorrect);
-      setTotalWrong(totalWrong);
-      setTotalAnswered(totalAnswered);
-    }
+    fetchData();
 
     const savedTimeRemaining = Cookies.get('timeRemaining');
     if (savedTimeRemaining) {
       setTimeRemaining(parseInt(savedTimeRemaining, 10));
     }
-  }, []);
 
-  useEffect(() => {
     const timer = setInterval(() => {
       setTimeRemaining((prevTime) => {
         const newTime = prevTime - 1;
@@ -93,58 +83,12 @@ const QuizPage: React.FC = () => {
       });
     }, 1000);
 
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
-
-  useEffect(() => {
     if (timeRemaining === 0) {
-      const result = {
-        totalCorrect,
-        totalWrong,
-        totalAnswered,
-      };
-      Cookies.set('quizResult', JSON.stringify(result));
       router.push('/result');
       Cookies.remove('timeRemaining');
     }
-  }, [timeRemaining]);
 
-  const handleSelectAnswer = (answer: string) => {
-    const currentQuestionObj = questions[currentQuestion];
-    const isCorrect = currentQuestionObj.correct_answer === answer;
-    setSelectedAnswers([...selectedAnswers, answer]);
-    
-    if (isCorrect) {
-      setTotalCorrect(totalCorrect + 1);
-    } else {
-      setTotalWrong(totalWrong + 1);
-    }
-    
-    setTotalAnswered(totalAnswered + 1);
-    
-    if (totalAnswered + 1 === 10) {
-      const result = {
-        totalCorrect: totalCorrect + (isCorrect ? 1 : 0),
-        totalWrong: totalWrong + (isCorrect ? 0 : 1),
-        totalAnswered: totalAnswered + 1,
-      };
-      Cookies.set('quizResult', JSON.stringify(result));
-      router.push('/result');
-    } else {
-      setCurrentQuestion(currentQuestion + 1);
-    }
-  };
-
-  useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      const result = {
-        totalCorrect,
-        totalWrong,
-        totalAnswered,
-      };
-      Cookies.set('quizResult', JSON.stringify(result));
       Cookies.set('timeRemaining', timeRemaining.toString());
       event.preventDefault();
       event.returnValue = '';
@@ -153,9 +97,39 @@ const QuizPage: React.FC = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
+      clearInterval(timer);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [totalCorrect, totalWrong, totalAnswered, timeRemaining]);
+  }, [dispatch, currentQuestion, questions.length, timeRemaining, router]);
+
+  const handleSelectAnswer = (answer: string) => {
+    const currentQuestionObj = questions[currentQuestion];
+
+    if (currentQuestionObj && currentQuestionObj.correct_answer) {
+      const isCorrect = currentQuestionObj.correct_answer === answer;
+
+      const newAnsweredQuestion: AnsweredQuestion = {
+        category: currentQuestionObj.category,
+        question: currentQuestionObj.question,
+        correct_answer: currentQuestionObj.correct_answer,
+        selected_answer: answer,
+      };
+
+      dispatch(setAnsweredQuestions([...answeredQuestions, newAnsweredQuestion]));
+
+      if (isCorrect) {
+        dispatch(setTotalCorrect(totalCorrect + 1));
+      } else {
+        dispatch(setTotalWrong(totalWrong + 1));
+      }
+
+      if (answeredQuestions.length + 1 === 10) {
+        router.push('/result');
+      } else {
+        dispatch(setCurrentQuestion(currentQuestion + 1));
+      }
+    }
+  };
 
   const shuffledAnswers = useMemo(() => getShuffledAnswers(questions, currentQuestion), [
     questions,
@@ -167,7 +141,7 @@ const QuizPage: React.FC = () => {
       <div className="flex flex-col items-center justify-center h-screen">
         <div className="flex justify-between w-full md:w-3/5">
           <h2 className="text-lg mb-4">
-            <span className="font-bold">Questions:</span> {totalAnswered}/{questions.length}
+            <span className="font-bold">Questions:</span> {answeredQuestions.length}/{questions.length}
           </h2>
           <h2 className="text-lg mb-4">
             <span className="font-bold">Time Remaining:</span> {timeRemaining} seconds
@@ -175,8 +149,8 @@ const QuizPage: React.FC = () => {
         </div>
         {questions.length > 0 && currentQuestion < questions.length ? (
           <QuestionCard
-            category={questions[currentQuestion].category}
-            question={he.decode(questions[currentQuestion].question)}
+            category={questions[currentQuestion]?.category}
+            question={he.decode(questions[currentQuestion]?.question)}
             answers={shuffledAnswers}
             onSelectAnswer={handleSelectAnswer}
           />

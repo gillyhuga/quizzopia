@@ -3,15 +3,17 @@ import question from "./question";
 import storage from "redux-persist/lib/storage";
 import { persistReducer } from "redux-persist";
 import thunk from "redux-thunk";
+import answer from "./answer";
 
 const reducers = combineReducers({
     questions: question,
+    answers: answer,
 });
 
 const persistConfig = {
     key: 'root',
     storage,
-    whitelist: ['question'],
+    whitelist: ['questions','answers'],
 };
 
 const persistedReducer = persistReducer(persistConfig, reducers);
