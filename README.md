@@ -2,7 +2,7 @@
 <p align="center">
   <h1 align="center">
   <a href="https://quizzopia.gillyhuga.com/">
-    Shorten URL
+    Quizzopia
   </a>
   </h1>
   <p align="center">
@@ -52,13 +52,11 @@
   ```
      cd quizzopia
   ```
-
 - Install dependencies
 
   ```
      npm install
   ```
-
 - Start the server
   ```
      npx next dev
